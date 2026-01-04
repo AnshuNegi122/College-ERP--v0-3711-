@@ -1,9 +1,22 @@
 import { connectToDatabase } from "@/lib/db"
 import { NextResponse } from "next/server"
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url)
+    const classId = searchParams.get("id")
     const { db } = await connectToDatabase()
+
+    if (classId) {
+      const ObjectId = require("mongodb").ObjectId
+      try {
+        const classData = await db.collection("classes").findOne({ _id: new ObjectId(classId) })
+        return NextResponse.json(classData ? [classData] : [])
+      } catch {
+        return NextResponse.json([])
+      }
+    }
+
     const classes = await db.collection("classes").find({}).toArray()
     return NextResponse.json(classes)
   } catch (error) {

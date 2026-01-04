@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { TimetableView } from "@/components/timetable-view"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 export default function StudentDashboard() {
   const [timetable, setTimetable] = useState<any>(null)
@@ -12,7 +12,9 @@ export default function StudentDashboard() {
   const [subjects, setSubjects] = useState<any[]>([])
   const [teachers, setTeachers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [studentClass, setStudentClass] = useState<string>("")
+  const [error, setError] = useState("")
+  const [className, setClassName] = useState("")
+  const router = useRouter()
 
   useEffect(() => {
     fetchData()
@@ -20,37 +22,57 @@ export default function StudentDashboard() {
 
   const fetchData = async () => {
     try {
-      // Get student info from session/cookie (simplified for demo)
-      const classId = localStorage.getItem("studentClassId")
+      const classId = localStorage.getItem("studentClassId") || localStorage.getItem("userClassId")
 
-      if (classId) {
-        setStudentClass(classId)
-
-        const [timetableRes, sessionsRes, subjectsRes, teachersRes] = await Promise.all([
-          fetch(`/api/timetables?classId=${classId}`),
-          fetch("/api/sessions"),
-          fetch("/api/subjects"),
-          fetch("/api/users?role=teacher"),
-        ])
-
-        const timetables = await timetableRes.json()
-        const sessions = await sessionsRes.json()
-        const subjects = await subjectsRes.json()
-        const teachers = await teachersRes.json()
-
-        // Get the latest published timetable
-        const latestTimetable = timetables.find((t: any) => t.status === "published")
-
-        setTimetable(latestTimetable)
-        setSessions(sessions)
-        setSubjects(subjects)
-        setTeachers(teachers)
+      if (!classId) {
+        setError("Student class information not found. Please contact administrator.")
+        setLoading(false)
+        return
       }
+
+      const [timetableRes, sessionsRes, subjectsRes, teachersRes, classRes] = await Promise.all([
+        fetch(`/api/timetables?classId=${classId}`),
+        fetch("/api/sessions"),
+        fetch("/api/subjects"),
+        fetch("/api/users?role=teacher"),
+        fetch(`/api/classes?id=${classId}`),
+      ])
+
+      if (!timetableRes.ok || !sessionsRes.ok) {
+        throw new Error("Failed to fetch data")
+      }
+
+      const timetables = await timetableRes.json()
+      const sessions = await sessionsRes.json()
+      const subjects = await subjectsRes.json()
+      const teachers = await teachersRes.json()
+      const classes = await classRes.json()
+
+      // Get the latest published timetable
+      const latestTimetable = Array.isArray(timetables) ? timetables.find((t: any) => t.status === "published") : null
+
+      if (classes && Array.isArray(classes) && classes.length > 0) {
+        setClassName(`${classes[0].name} - ${classes[0].division}`)
+      }
+
+      setTimetable(latestTimetable)
+      setSessions(sessions)
+      setSubjects(subjects)
+      setTeachers(teachers)
     } catch (error) {
       console.error("Failed to fetch timetable:", error)
+      setError("Unable to load timetable. Please try again later.")
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem("userRole")
+    localStorage.removeItem("userEmail")
+    localStorage.removeItem("studentClassId")
+    localStorage.removeItem("userClassId")
+    router.push("/login")
   }
 
   if (loading) {
@@ -65,11 +87,20 @@ export default function StudentDashboard() {
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">My Timetable</h1>
-          <Link href="/login">
-            <Button variant="outline">Logout</Button>
-          </Link>
+          <div>
+            <h1 className="text-3xl font-bold">My Timetable</h1>
+            {className && <p className="text-muted-foreground mt-1">{className}</p>}
+          </div>
+          <Button variant="destructive" onClick={handleLogout}>
+            Logout
+          </Button>
         </div>
+
+        {error && (
+          <Card className="p-6 mb-6 bg-red-50 border-red-200">
+            <p className="text-red-700">{error}</p>
+          </Card>
+        )}
 
         {timetable ? (
           <Card className="p-6">

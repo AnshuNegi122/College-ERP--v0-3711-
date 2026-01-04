@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { TimetableView } from "@/components/timetable-view"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 export default function TeacherDashboard() {
   const [myClasses, setMyClasses] = useState<any[]>([])
@@ -13,6 +13,7 @@ export default function TeacherDashboard() {
   const [subjects, setSubjects] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedClassId, setSelectedClassId] = useState<string>("")
+  const router = useRouter()
 
   useEffect(() => {
     fetchData()
@@ -48,9 +49,10 @@ export default function TeacherDashboard() {
     try {
       const res = await fetch(`/api/timetables?classId=${classId}`)
       const data = await res.json()
-      setTimetables(data)
+      setTimetables(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error("Failed to fetch timetables:", error)
+      setTimetables([])
     }
   }
 
@@ -59,6 +61,12 @@ export default function TeacherDashboard() {
       fetchTimetables(selectedClassId)
     }
   }, [selectedClassId])
+
+  const handleLogout = () => {
+    localStorage.removeItem("userRole")
+    localStorage.removeItem("userEmail")
+    router.push("/login")
+  }
 
   if (loading) {
     return (
@@ -75,9 +83,9 @@ export default function TeacherDashboard() {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">My Teaching Schedule</h1>
-          <Link href="/login">
-            <Button variant="outline">Logout</Button>
-          </Link>
+          <Button variant="destructive" onClick={handleLogout}>
+            Logout
+          </Button>
         </div>
 
         <Card className="p-6 mb-6">

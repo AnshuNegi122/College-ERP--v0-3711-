@@ -10,13 +10,19 @@ export async function GET(request: Request) {
     const query: any = {}
     if (classId) {
       const ObjectId = require("mongodb").ObjectId
-      query.classId = new ObjectId(classId)
+      try {
+        query.classId = new ObjectId(classId)
+      } catch {
+        return NextResponse.json([])
+      }
     }
 
-    const timetables = await db.collection("timetables").find(query).toArray()
+    const timetablesCollection = db.collection("timetables")
+    const timetables = await timetablesCollection.find(query).toArray()
 
     return NextResponse.json(timetables)
   } catch (error) {
+    console.error("Timetable fetch error:", error)
     return NextResponse.json({ error: "Failed to fetch timetables" }, { status: 500 })
   }
 }
@@ -31,6 +37,7 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ message: "Timetable updated", modifiedCount: result.modifiedCount }, { status: 200 })
   } catch (error) {
+    console.error("Timetable update error:", error)
     return NextResponse.json({ error: "Failed to update timetable" }, { status: 500 })
   }
 }

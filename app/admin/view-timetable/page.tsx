@@ -16,6 +16,8 @@ export default function ViewTimetables() {
   const [subjects, setSubjects] = useState<any[]>([])
   const [teachers, setTeachers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [publishing, setPublishing] = useState(false)
+  const [message, setMessage] = useState("")
 
   useEffect(() => {
     fetchInitialData()
@@ -60,12 +62,44 @@ export default function ViewTimetables() {
     try {
       const res = await fetch(`/api/timetables?classId=${classId}`)
       const data = await res.json()
-      setTimetables(data)
-      if (data.length > 0) {
+      setTimetables(Array.isArray(data) ? data : [])
+      if (Array.isArray(data) && data.length > 0) {
         setSelectedTimetable(data[0])
       }
     } catch (error) {
       console.error("Failed to fetch timetables:", error)
+    }
+  }
+
+  const handlePublish = async () => {
+    if (!selectedTimetable) return
+
+    setPublishing(true)
+    setMessage("")
+
+    try {
+      const res = await fetch("/api/timetables", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          timetableId: selectedTimetable._id,
+          status: "published",
+        }),
+      })
+
+      if (res.ok) {
+        setMessage("Timetable published successfully!")
+        // Refresh timetables
+        await fetchTimetablesForClass(selectedClassId)
+        setTimeout(() => setMessage(""), 3000)
+      } else {
+        setMessage("Failed to publish timetable")
+      }
+    } catch (error) {
+      console.error("Failed:", error)
+      setMessage("Error publishing timetable")
+    } finally {
+      setPublishing(false)
     }
   }
 
@@ -84,7 +118,7 @@ export default function ViewTimetables() {
     <div className="flex min-h-screen">
       <AdminSidebar />
       <main className="flex-1 p-8">
-        <h1 className="text-3xl font-bold mb-8">View Timetables</h1>
+        <h1 className="text-3xl font-bold mb-8">View & Publish Timetables</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar */}
@@ -112,7 +146,7 @@ export default function ViewTimetables() {
                     <button
                       key={tt._id}
                       onClick={() => setSelectedTimetable(tt)}
-                      className={`w-full text-left p-2 rounded text-sm ${
+                      className={`w-full text-left p-2 rounded text-sm transition-colors ${
                         selectedTimetable?._id === tt._id
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted hover:bg-muted/80"
@@ -132,9 +166,17 @@ export default function ViewTimetables() {
             {selectedTimetable ? (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-lg font-semibold mb-4">
-                    Timetable for {classes.find((c) => c._id === selectedClassId)?.name}
-                  </h2>
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h2 className="text-lg font-semibold">
+                        Timetable for {classes.find((c) => c._id === selectedClassId)?.name}
+                      </h2>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Generated: {new Date(selectedTimetable.generatedAt).toLocaleDateString()} | Status:{" "}
+                        <span className="font-semibold capitalize">{selectedTimetable.status}</span>
+                      </p>
+                    </div>
+                  </div>
                   <TimetableStats schedule={selectedTimetable.schedule} subjects={subjects} />
                 </div>
 
@@ -147,8 +189,27 @@ export default function ViewTimetables() {
                   />
                 </Card>
 
+                {message && (
+                  <Card
+                    className={`p-4 ${
+                      message.includes("successfully") ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"
+                    }`}
+                  >
+                    <p className={message.includes("successfully") ? "text-green-700" : "text-red-700"}>{message}</p>
+                  </Card>
+                )}
+
                 <div className="flex gap-4">
-                  {selectedTimetable.status === "draft" && <Button>Publish Timetable</Button>}
+                  {selectedTimetable.status === "draft" && (
+                    <Button onClick={handlePublish} disabled={publishing} className="bg-green-600 hover:bg-green-700">
+                      {publishing ? "Publishing..." : "Publish Timetable"}
+                    </Button>
+                  )}
+                  {selectedTimetable.status === "published" && (
+                    <Button disabled className="bg-green-600">
+                      Published
+                    </Button>
+                  )}
                   <Button variant="outline">Download PDF</Button>
                   <Button variant="outline">Print</Button>
                 </div>
@@ -156,7 +217,7 @@ export default function ViewTimetables() {
             ) : (
               <Card className="p-6">
                 <p className="text-center text-muted-foreground">
-                  No timetables found for this class. Generate one first.
+                  No timetables found for this class. Generate one first in the Generate Timetables section.
                 </p>
               </Card>
             )}
