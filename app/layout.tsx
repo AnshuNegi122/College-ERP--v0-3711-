@@ -8,8 +8,9 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "School Timetable Management System",
-  description: "Comprehensive timetable generation and management for schools and colleges",
+  title: "College ERP Management System",
+  description:
+    "Comprehensive Enterprise Resource Planning system for colleges - Timetable, Attendance, Grades, Fees, and Academic Management",
   generator: "v0.app",
   icons: {
     icon: [

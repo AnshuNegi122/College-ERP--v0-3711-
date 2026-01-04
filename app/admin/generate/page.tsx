@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { AdminSidebar } from "@/components/admin/sidebar"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { TimetablePreviewModal } from "@/components/timetable-preview-modal"
 
 export default function GenerateTimetables() {
   const [classes, setClasses] = useState<any[]>([])
@@ -11,6 +12,8 @@ export default function GenerateTimetables() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
   const [timetables, setTimetables] = useState<any[]>([])
+  const [previewTimetable, setPreviewTimetable] = useState<any | null>(null)
+  const [previewClass, setPreviewClass] = useState<any | null>(null)
 
   useEffect(() => {
     fetchClasses()
@@ -61,6 +64,16 @@ export default function GenerateTimetables() {
       if (res.ok) {
         setMessage("Timetable generated successfully!")
         fetchTimetables()
+        const classData = classes.find((c) => c._id === selectedClass)
+        setPreviewClass(classData)
+        const generatedTimetable = {
+          _id: data.timetableId,
+          classId: selectedClass,
+          schedule: data.schedule,
+          generatedAt: new Date(),
+          status: "draft",
+        }
+        setPreviewTimetable(generatedTimetable)
         setSelectedClass("")
       } else {
         setMessage(data.error || "Failed to generate timetable")
@@ -87,10 +100,18 @@ export default function GenerateTimetables() {
       if (res.ok) {
         setMessage("Timetable published successfully!")
         fetchTimetables()
+        setPreviewTimetable(null)
+        setPreviewClass(null)
       }
     } catch (error) {
       console.error("Failed:", error)
     }
+  }
+
+  const handleViewTimetable = (timetable: any) => {
+    const classData = classes.find((c) => c._id === timetable.classId)
+    setPreviewClass(classData)
+    setPreviewTimetable(timetable)
   }
 
   return (
@@ -158,11 +179,16 @@ export default function GenerateTimetables() {
                           Status: <span className="capitalize font-semibold">{timetable.status}</span>
                         </p>
                       </div>
-                      {timetable.status === "draft" && (
-                        <Button size="sm" onClick={() => handlePublish(timetable._id)}>
-                          Publish
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => handleViewTimetable(timetable)}>
+                          View
                         </Button>
-                      )}
+                        {timetable.status === "draft" && (
+                          <Button size="sm" onClick={() => handlePublish(timetable._id)}>
+                            Publish
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </Card>
                 )
@@ -170,6 +196,17 @@ export default function GenerateTimetables() {
             </div>
           </div>
         </div>
+
+        <TimetablePreviewModal
+          isOpen={previewTimetable !== null}
+          timetable={previewTimetable}
+          classInfo={previewClass}
+          onClose={() => {
+            setPreviewTimetable(null)
+            setPreviewClass(null)
+          }}
+          onPublish={handlePublish}
+        />
       </main>
     </div>
   )

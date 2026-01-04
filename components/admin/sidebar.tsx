@@ -52,6 +52,11 @@ export function AdminSidebar() {
             View Timetables
           </Button>
         </Link>
+        <Link href="/admin/attendance">
+          <Button variant="ghost" className="w-full justify-start">
+            Attendance Reports
+          </Button>
+        </Link>
         <Link href="/admin/users">
           <Button variant="ghost" className="w-full justify-start">
             Manage Users

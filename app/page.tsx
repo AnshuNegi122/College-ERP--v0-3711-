@@ -8,7 +8,7 @@ export default function Home() {
       {/* Navigation */}
       <nav className="border-b border-border bg-card/50 backdrop-blur">
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-primary">TimeTable Pro</h1>
+          <h1 className="text-2xl font-bold text-primary">CollegeERP Pro</h1>
           <div className="flex gap-4">
             <Link href="/login">
               <Button variant="outline">Login</Button>
@@ -23,12 +23,10 @@ export default function Home() {
       {/* Hero Section */}
       <section className="max-w-6xl mx-auto px-8 py-20">
         <div className="text-center mb-12">
-          <h2 className="text-5xl font-bold mb-4 text-balance">
-            Intelligent Timetable Generation for Schools & Colleges
-          </h2>
+          <h2 className="text-5xl font-bold mb-4 text-balance">Intelligent ERP Management for Schools & Colleges</h2>
           <p className="text-xl text-muted-foreground mb-8 text-balance">
-            Automate your scheduling challenges with our AI-powered timetable management system. Optimize class
-            schedules, manage resources, and ensure consistency across your institution.
+            Streamline your administrative tasks with our AI-powered ERP system. Manage timetables, resources, and
+            communications efficiently across your institution.
           </p>
           <div className="flex gap-4 justify-center">
             <Link href="/register">
@@ -53,7 +51,7 @@ export default function Home() {
                 />
               </svg>
             </div>
-            <h3 className="font-semibold text-lg mb-2">Automated Scheduling</h3>
+            <h3 className="font-semibold text-lg mb-2">Automated Timetable Generation</h3>
             <p className="text-sm text-muted-foreground">
               Automatically generate optimized timetables based on your constraints and requirements
             </p>
@@ -114,7 +112,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-border bg-card/50 mt-20">
         <div className="max-w-6xl mx-auto px-8 py-8 text-center text-sm text-muted-foreground">
-          <p>© 2025 TimeTable Pro. All rights reserved.</p>
+          <p>© 2025 CollegeERP Pro. All rights reserved.</p>
         </div>
       </footer>
     </div>
